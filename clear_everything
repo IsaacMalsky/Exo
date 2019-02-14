@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#Removes Inlists
+rm inlist_comp_*
+rm inlist_corer_*
+rm inlist_corel_*
+rm inlist_reduce_*
+rm inlist_remove_heating_*
+rm inlist_corem_*
+rm inlist_irrad_*
+rm inlist_evolve_*
+rm inlist_heating_*
+rm inlist_pre_core_*
+
+#Get rid of .mod files
+rm comp_*
+rm corer_*
+rm corel_*
+rm reduce_*
+rm remove_*
+rm corem_*
+rm heating_*
+rm irrad_*
+rm evolve_*
+rm pre_core_*
+
+cd photos
+
+rm x*
+
+cd ..
+cd LOGS
+
+rm profile*
+rm comp_*
+rm corer_*
+rm corel_*
+rm reduce_*
+#rm remove_*
+rm corem_*
+rm heating_*
+rm irrad_*
+#rm evolve_*
+rm pre_core_*
