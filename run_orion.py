@@ -22,8 +22,8 @@ initial_mod = "initial_planet.mod"
 #########         PARAMETERS LISTS         #########
 ####################################################
 
-mpList= [10]
-orbitalList=[.25]
+mpList= [22.5]
+orbitalList=[.05]
 enFracList=[.01]
 yList = [.24]
 zList = [.02]
@@ -35,7 +35,7 @@ n_frac_list = [.10]
 #########        IRRAD/EVOL CONDITIONS        ######
 ####################################################                            
 rs = 1.0                      #star radius in rsun
-Teff_star = 6000                 #Host Star Temp
+Teff_star = 3000                 #Host Star Temp
 BA= 0.20                         #planet Bond albedo
 a = 1.0                          #frac_absorbing_radius
 ms = 1.0                         #host_star_mass

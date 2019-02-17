@@ -44,9 +44,9 @@ def calculate_rho(mp, enFrac):
 
 def calculate_column_depth(Teq, profile):
     e = 2.7182818284
-    T, P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,11,12]) #6000K
+    #T, P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,11,12]) #6000K
     #T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,7,8]) #4000K
-    #T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt', unpack=True, skiprows =38, usecols=[0,1,5,6]) #3000K
+    T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt', unpack=True, skiprows =38, usecols=[0,1,5,6]) #3000K
 
     Opacity_function = interpolate.interp2d(T, P, k_p)
     zone, mass, temperature, radius, pressure = loadtxt(profile, unpack=True, skiprows =6, usecols=[0,1,2,3,6])   
