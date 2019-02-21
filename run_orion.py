@@ -22,9 +22,9 @@ initial_mod = "initial_planet.mod"
 #########         PARAMETERS LISTS         #########
 ####################################################
 
-mpList= [22.5]
-orbitalList=[.05]
-enFracList=[.01]
+mpList=[10]
+orbitalList=[0.25]
+enFracList=[0.025]
 yList = [.24]
 zList = [.02]
 entropyList = [9.0]
@@ -35,7 +35,7 @@ n_frac_list = [.10]
 #########        IRRAD/EVOL CONDITIONS        ######
 ####################################################                            
 rs = 1.0                      #star radius in rsun
-Teff_star = 3000                 #Host Star Temp
+Teff_star = 6000                 #Host Star Temp
 BA= 0.20                         #planet Bond albedo
 a = 1.0                          #frac_absorbing_radius
 ms = 1.0                         #host_star_mass
@@ -47,6 +47,11 @@ initialage = 0
 maxage = 0
 rf = .1                #escape_rate_reduction_factor
 
+
+flux_dayside = (sigma*Teff_star**4 * (rs * rsun / orbitalList[0] / au )**2)*(1-BA)    # flux hitting planet's dayside
+Teq = (flux_dayside*(1-BA)/4.0/sigma)**0.25    #equalibrium temperature
+
+print ('Teq',Teq)
 for mp in mpList:
 	pre_reduce_mod = "pre_reduce_" + ".mod"
 	inlist_pre_reduce = "inlist_reduce_" + str(mp)
@@ -108,7 +113,7 @@ for mp in mpList:
 								if (os.path.isfile(remove_mod) == True):
 
 									flux_dayside = (sigma*Teff_star**4 * (rs * rsun / orb_sep / au )**2)*(1-BA)	# flux hitting planet's dayside
-									Teq = (flux_dayside*(1-BA)/4.0/sigma)**0.25    #equalibrium temperature
+									teq = (flux_dayside*(1-BA)/4.0/sigma)**0.25    #equalibrium temperature
 									column_depth = my.calculate_column_depth(Teq, remove_heating_profile)
 									if (column_depth != -1):
 										#8
@@ -124,7 +129,7 @@ for mp in mpList:
 										inlist_evolve = "inlist_evolve_" + str(mp) + "_" + str(enFrac) + "_" + str(y) + "_" + str(z) + "_" + str(orb_sep) + "_" + str(entropy) + "_" + str(n_frac)
 
                                         #column_depth = my.calculate_column_depth(Teq, flux_dayside, irrad_profile, orb_sep)
-										run_time = my.run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, ms, rf, orb_sep, ec, column_depth, flux_dayside, formation_time)
+										run_time = my.run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, ms, rf, orb_sep, ec, column_depth, flux_dayside, formation_time, teq)
 									else:
 										pass
 								else:
@@ -146,7 +151,7 @@ for mp in mpList:
 							for n_frac in n_frac_list:
 								if (os.path.isfile(remove_mod) == True):
 									flux_dayside = (sigma*Teff_star**4 * (rs * rsun / orb_sep / au )**2)*(1-BA)	# flux hitting planet's dayside
-									Teq = (flux_dayside*(1-BA)/4.0/sigma)**0.25    #equalibrium temperature
+									teq = (flux_dayside*(1-BA)/4.0/sigma)**0.25    #equalibrium temperature
 									column_depth = my.calculate_column_depth(Teq, remove_cooling_profile)
 									if (column_depth != -1):
 										#8
@@ -162,7 +167,7 @@ for mp in mpList:
 										inlist_evolve = "inlist_evolve_" + str(mp) + "_" + str(enFrac) + "_" + str(y) + "_" + str(z) + "_" + str(orb_sep) + "_" + str(entropy) + "_" + str(n_frac)
 
                                         #column_depth = my.calculate_column_depth(Teq, flux_dayside, irrad_profile, orb_sep)
-										run_time = my.run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, ms, rf, orb_sep, ec, column_depth, flux_dayside, formation_time)
+										run_time = my.run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, ms, rf, orb_sep, ec, column_depth, flux_dayside, formation_time, teq)
 									else:
 										pass
 								else:

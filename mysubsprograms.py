@@ -44,9 +44,9 @@ def calculate_rho(mp, enFrac):
 
 def calculate_column_depth(Teq, profile):
     e = 2.7182818284
-    #T, P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,11,12]) #6000K
+    T, P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,11,12]) #6000K
     #T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,7,8]) #4000K
-    T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt', unpack=True, skiprows =38, usecols=[0,1,5,6]) #3000K
+    #T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt', unpack=True, skiprows =38, usecols=[0,1,5,6]) #3000K
 
     Opacity_function = interpolate.interp2d(T, P, k_p)
     zone, mass, temperature, radius, pressure = loadtxt(profile, unpack=True, skiprows =6, usecols=[0,1,2,3,6])   
@@ -56,10 +56,9 @@ def calculate_column_depth(Teq, profile):
     for i in range(len(zone)):
         mass_column_depth = ((mass[0] - mass[i]) * msun) / (4 * 3.14159 * (radius[i] ** 2))
         opacity_column_depth = (2 / (Opacity_function(Teq, pressure[i])))[0]
-        print (mass_column_depth)
         switch_zone.append((opacity_column_depth - mass_column_depth, zone[i], mass_column_depth))
 
-    print (switch_zone[0])
+    column_depth = abs(switch_zone[0][0])
     if switch_zone[0][0] > 0:
         for i in range(len(switch_zone)):
             print (switch_zone[i - 1])
@@ -322,7 +321,7 @@ def run_irrad(irrad_profile, inlist_irrad, remove_mod, irrad_mod, column_depth, 
 	return run_time
 
 
-def run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, ms, rf, orb_sep, ec, column_depth, flux_dayside, formation_time):
+def run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, ms, rf, orb_sep, ec, column_depth, flux_dayside, formation_time, teq):
 	start_time = time.time()
 	print ("create initial planet")
 	f = open('inlist_evolve', 'r')
@@ -346,6 +345,7 @@ def run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, 
 	g = g.replace("<<rf>>", str(rf))
 	g = g.replace("<<orb_sep>>", str(orb_sep))
 	g = g.replace("<<ec>>", str(ec))
+	g = g.replace("<<teq>>", str(teq))
 	
 
 	h = open(inlist_evolve, 'w')

@@ -63,6 +63,7 @@
   x_ctrl(54)= <<orb_sep>>                 !orbital_distance (this gets multipled by au)
   x_ctrl(55)= <<ec>>                      !eddy coefficient
   x_ctrl(56)= 100			  !Only run the comp change if true 
+  x_ctrl(57)= <<teq>>       !Only run the comp change if true 
 	
   use_other_adjust_mdot = .true.
   use_other_energy = .true.
