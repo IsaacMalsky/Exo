@@ -22,9 +22,9 @@ initial_mod = "initial_planet.mod"
 #########         PARAMETERS LISTS         #########
 ####################################################
 
-mpList=[10]
-orbitalList=[0.25]
-enFracList=[0.025]
+mpList=[20]
+orbitalList=[.1, 0.25, .50]
+enFracList=[0.01, .05]
 yList = [.24]
 zList = [.02]
 entropyList = [9.0]

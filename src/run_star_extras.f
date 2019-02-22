@@ -85,7 +85,7 @@
         double precision :: escape_rate_h1, escape_rate_he4, total_loss_rate, initial_helium_fraction
 
         !Final Values for helium and hydrogen escape
-        double precision :: escape_h1, escape_he4, frac_change_h1, frac_change_he4, total_frac_change, frac_other_isotopes
+        double precision :: frac_change_h1, frac_change_he4, total_frac_change, frac_other_isotopes
         double precision :: scale_height, bi_diff_co, surface_pressure, radius_above_surface, teq
 
         integer :: k,i,j
@@ -115,7 +115,7 @@
         eddy_coeff = s% x_ctrl(55) ! Eddy coefficient, should be ~1e9
         comp_bool = s% x_ctrl(56) !False on everything but the evolve inlist
         teq = s% x_ctrl(57)
-
+    
         !Heigh parameters
         homopause_temp = teq
 
@@ -158,13 +158,18 @@
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !!!!!!!!!!!!!!BEGINING OF MORE COMPLES EQUATIONS!!!!!!!!!!!!!!!!!
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        !Importing the varibles from the start of the step
         scale_height =  s% xtra1
         molar_mass = s% xtra2
+
 
         !The 1.25 is the molecular weight of H and He ** .5
         !V_he = 2.88 V_h2 = 1.98
         !The 1.013d6 converts pressure from atm to barye
         homopause_pressure = ((.001 * (teq ** 1.75) * (1.118)) / ((10 ** 9) * 7.174)) * 1.013d6
+        write (*,*) 'homo pressure', homopause_pressure
+        write (*,*) 'surface pressure', 10 ** s% log_surface_pressure
         radius_above_surface  = -1 * scale_height * LOG(homopause_pressure / (10 ** s% log_surface_pressure))
         homopause_radius = planet_radius_cgs + radius_above_surface
 
@@ -203,14 +208,7 @@
         right_side = escape_dl * h1_number_frac * atomic_mass_h1 * 4 * pi * (homopause_radius ** 2)
 
         !This needs to be saved and sent to be completed at the end of the step
-        envelope_mass = ((s% star_mass_h1 * msun) / s% xa(1,1))
-
-        s% xtra3 = escape_el
-        s% xtra4 = right_side
-        s% xtra5 = envelope_mass
-
-        s% xtra6 = homopause_radius
-        s% xtra7 = f_r
+        envelope_mass = s% xtra3
 
         IF (comp_bool > 0) THEN
             IF (escape_el < right_side) THEN
@@ -220,6 +218,13 @@
                 total_loss_rate = (escape_rate_h1 + escape_rate_he4)
                 s% mstar_dot = -total_loss_rate
 
+                s% xtra4 = escape_el
+                s% xtra5 = right_side
+                s% xtra6 = homopause_radius
+                s% xtra7 = f_r
+                s% xtra8 = escape_rate_h1
+                s% xtra9 = escape_rate_he4
+                s% xtra10 = teq
             END IF
 
             IF (escape_el > right_side) THEN
@@ -234,6 +239,13 @@
                 total_loss_rate = (escape_rate_h1 + escape_rate_he4)
                 s% mstar_dot = -total_loss_rate
 
+                s% xtra4 = escape_el
+                s% xtra5 = right_side
+                s% xtra6 = homopause_radius
+                s% xtra7 = f_r
+                s% xtra8 = escape_rate_h1
+                s% xtra9 = escape_rate_he4
+                s% xtra10 = teq
             END IF
         END IF
     end subroutine mass_loss
@@ -294,6 +306,12 @@
         else ! it is a restart
         call unpack_extra_info(s)
         end if
+
+        !Variables that I was to save throughout the run
+        s% xtra1 = s% scale_height(1)
+        s% xtra2 = s% mu(1)
+        s% xtra3 = ((s% star_mass_h1 * msun) / s% xa(1,1)) ! envelope_mass
+
     end function extras_startup
 
           
@@ -323,7 +341,6 @@
     end subroutine extras_after_evolve
 
     
-
     !returns either keep_going, retry, backup, or terminate.
     integer function extras_check_model(id, id_extra)
         integer, intent(in) :: id, id_extra
@@ -343,7 +360,7 @@
         ierr = 0
         call star_ptr(id, s, ierr)
         if (ierr /= 0) return
-        how_many_extra_history_columns = 27
+        how_many_extra_history_columns = 31
     end function how_many_extra_history_columns
           
           
@@ -352,31 +369,9 @@
         integer, intent(in) :: id, id_extra, n
         character (len=maxlen_history_column_name) :: names(n)
         real(dp) :: vals(n)
+        real(dp) :: alpha
 
         double precision :: r_10_bar, r_100_bar, r_1000_bar
-
-        double precision :: frac_absorbed_euv, frac_absorbing_radius, host_star_mass, right_side, comp_bool, f_r
-        double precision :: escape_rate_reduction_factor, orbital_distance, eddy_coeff, homopause_pressure
-
-        double precision :: planet_radius_cgs, planet_age_cgs, planet_mass_cgs, r_constant, molar_mass, height
-        double precision :: mass_fractionation_effect, homopause_temp, homopause_radius, q_c, q_net
-        double precision :: h1_number_frac, he4_number_frac,atomic_mass_he4,atomic_mass_h1
-        double precision :: he3_num_frac, c12_num_frac, n14_num_frac, o16_num_frac, ne20_num_frac, mg24_num_frac
-
-
-        double precision :: h1_atoms, he3_atoms, he4_atoms, c12_atoms, mg_mass
-        double precision :: n14_atoms,o16_atoms, ne20_atoms,mg24_atoms, total_atoms
-
-        !Dependent Variables
-        double precision :: luminosity_euv, epsilon, K_tides, LOG_LEUV, total_loss, binary_temp_constant
-
-        !Diffusion and energy limited escape rate
-        double precision :: escape_dl, escape_el, envelope_mass, initial_hydrogen_fraction
-        double precision :: escape_rate_h1, escape_rate_he4, total_loss_rate, initial_helium_fraction
-
-        !Final Values for helium and hydrogen escape
-        double precision :: escape_h1, escape_he4, frac_change_h1, frac_change_he4, total_frac_change, frac_other_isotopes
-        double precision :: scale_height, bi_diff_co, surface_pressure, radius_above_surface, teq
 
         integer, intent(out) :: ierr
         integer :: k,i,j
@@ -384,53 +379,6 @@
         ierr = 0
         call star_ptr(id, s, ierr)
         if (ierr /= 0) return
-
-        teq = s% x_ctrl(57)
-
-        r_constant = 8.314 * (10 ** 7) ! Newton cm / mol K
-
-        !The number of atoms of each species
-        h1_atoms = (s% star_mass_h1 * msun)/(amu)
-        he3_atoms = (s% star_mass_he3 * msun)/(3 * amu)
-        he4_atoms = (s% star_mass_he4 * msun)/(4 * amu)
-        c12_atoms = (s% star_mass_c12 * msun)/(12 * amu)
-        n14_atoms = (s% star_mass_n14 * msun)/(14 * amu)
-        o16_atoms = (s% star_mass_o16 * msun)/(16 * amu)
-        ne20_atoms = (s% star_mass_ne20 * msun)/(20 * amu)
-
-        !Calculating the mg atoms
-        mg_mass = 0
-        mg_mass = s% xa(8,1) * s% star_mass * msun
-        mg24_atoms = (mg_mass)/(24 * amu)
-
-        !Calculating Abundances
-        total_atoms = h1_atoms + he3_atoms + he4_atoms + c12_atoms &
-        + n14_atoms + n14_atoms + o16_atoms + ne20_atoms + mg24_atoms
-
-        !Calculating Mole Fraction
-        atomic_mass_h1 = 1 * amu
-        atomic_mass_he4 = 4 * amu
-        h1_number_frac  = h1_atoms / total_atoms
-        he4_number_frac = he4_atoms / total_atoms
-
-        he3_num_frac = he3_atoms / total_atoms
-        c12_num_frac = c12_atoms / total_atoms
-        n14_num_frac = n14_atoms / total_atoms
-        o16_num_frac = o16_atoms / total_atoms
-        ne20_num_frac = ne20_atoms / total_atoms
-        mg24_num_frac = mg24_atoms / total_atoms
-
-        !Calculating the molar mass from abundances
-        molar_mass = (h1_number_frac + (he3_num_frac * 3) + (he4_number_frac * 4) + (c12_num_frac * 12) + &
-        (n14_num_frac * 14) + (o16_num_frac * 16) + (ne20_num_frac * 20) + (mg24_num_frac * 24))! grams/mol
-
-        homopause_temp = teq
-        scale_height = (r_constant * homopause_temp) / (molar_mass * (10 ** (s% log_surface_gravity)))
-
-        !The 3.036 is from eddy dif equations. I need to put this in the paper
-
-        homopause_pressure = (3.036d-10 * (teq ** 3.5) * 10) ! 10 for barye
-        radius_above_surface  = -1 * scale_height * LOG(homopause_pressure / (10 ** (s% log_surface_pressure)))
 
         do i = 1, s% nz
             IF (1e7 - s% P(i) < 0) THEN
@@ -452,7 +400,6 @@
                 EXIT
             END IF
         end do
-
 
         names(1)= "planet_radius_cgs"
         vals(1)= (10**(s% log_surface_radius))*Rsun
@@ -533,8 +480,25 @@
         vals(26) = r_1000_bar
 
         names(27) = 'homopause rad'
-        vals(27) = radius_above_surface / ((10**(s% log_surface_radius))*Rsun)
+        vals(27) = s% xtra6
 
+        names(28) = 'f_r'
+        vals(28) = s% xtra7
+
+        names(29) = 'scale height'
+        vals(29) = s% xtra1
+
+        names(30) = 'R_kbar' ! radius where P = 1 kbar = 1e9 dyne cm^-2
+        do k=1, s% nz
+            if (s% p(k+1) .ge. 1e9) then ! linear interpolate to approximate r at 1 kbar
+                alpha = (s% p(k+1) - 1e9) / (s% p(k+1) - s% p(k))
+                vals(30) = alpha * s% r(k+1) + (1d0 - alpha) * s% r(k)
+                exit
+            end if
+        end do
+
+        names(31) = 'R_transit (1d-3 bar, 1d3 barye)' ! approximate 'transit radius' from Miller, Fortney & Jackson 2009 (Eq. 1)
+        vals(31) = vals(30) + (-1 * s% xtra1 * LOG(1000. / (vals(30))))
 
     end subroutine data_for_extra_history_columns
 
@@ -574,29 +538,9 @@
         integer :: ierr
         integer :: k,i,j
 
-        !x controls (n, a, M, f)
-        double precision :: frac_absorbed_euv, frac_absorbing_radius, host_star_mass, right_side, comp_bool, f_r
-        double precision :: escape_rate_reduction_factor, orbital_distance, eddy_coeff, homopause_pressure
-
-        double precision :: planet_radius_cgs, planet_age_cgs, planet_mass_cgs, r_constant, molar_mass, height
-        double precision :: mass_fractionation_effect, homopause_temp, homopause_radius, q_c, q_net
-        double precision :: h1_number_frac, he4_number_frac,atomic_mass_he4,atomic_mass_h1
-        double precision :: he3_num_frac, c12_num_frac, n14_num_frac, o16_num_frac, ne20_num_frac, mg24_num_frac
-
-
-        double precision :: h1_atoms, he3_atoms, he4_atoms, c12_atoms, mg_mass
-        double precision :: n14_atoms,o16_atoms, ne20_atoms,mg24_atoms, total_atoms
-
-        !Dependent Variables
-        double precision :: luminosity_euv, epsilon, K_tides, LOG_LEUV, total_loss, binary_temp_constant
-
-        !Diffusion and energy limited escape rate
-        double precision :: escape_dl, escape_el, envelope_mass, initial_hydrogen_fraction
-        double precision :: escape_rate_h1, escape_rate_he4, total_loss_rate, initial_helium_fraction
-
-        !Final Values for helium and hydrogen escape
-        double precision :: escape_h1, escape_he4, frac_change_h1, frac_change_he4, total_frac_change, frac_other_isotopes
-        double precision :: scale_height, bi_diff_co, surface_pressure, radius_above_surface, teq
+        !Define a bunch of variables
+        double precision :: comp_bool, escape_el, right_side, envelope_mass
+        double precision :: escape_rate_h1, escape_rate_he4, total_loss_rate
 
         type (star_info), pointer :: s
         ierr = 0
@@ -605,134 +549,23 @@
         extras_finish_step = keep_going
         call store_extra_info(s)
 
-        !Here we define a couple constants that need to be accessed by all the subroutines
-        !I eventually scale height probably should be accessible in mass loss
-
-        s% xtra1 = s% scale_height(1)
-        s% xtra2 = s% mu(1)
-
-        !Converting all the planetary paremeters to cgs
-        planet_radius_cgs= (10 ** (s% log_surface_radius)) * Rsun
-        planet_age_cgs= (s% star_age) * 365 * 24 * 3600 + (1.892 * (10 ** 14))
-        planet_mass_cgs = (s% star_mass) * msun
-
-        comp_bool = 0
-
-        !Setting Parameters defined by the x_controls
-        frac_absorbed_euv = (s% x_ctrl(50))
-        frac_absorbed_euv = .1
-        frac_absorbing_radius = s% x_ctrl(51)
-        host_star_mass= s% x_ctrl(52) * msun
-        escape_rate_reduction_factor= s% x_ctrl(53)
-        orbital_distance= s% x_ctrl(54)* au
-        eddy_coeff = s% x_ctrl(55) ! Eddy coefficient, should be ~1e9
+        envelope_mass = s% xtra3
+        escape_el = s% xtra4
+        right_side = s% xtra5
+        escape_rate_h1 = s% xtra8
+        escape_rate_he4 = s% xtra9
         comp_bool = s% x_ctrl(56) !False on everything but the evolve inlist
-        teq = s% x_ctrl(57)
 
-        !Heigh parameters
-        homopause_temp = teq
 
-        !From Hu and Seager
-        mass_fractionation_effect = 8.0 * (10 ** 20)
-
-        r_constant = 8.314 * (10 ** 7) ! Newton cm / mol K
-
-        !The number of atoms of each species
-        h1_atoms = (s% star_mass_h1 * msun)/(amu)
-        he3_atoms = (s% star_mass_he3 * msun)/(3 * amu)
-        he4_atoms = (s% star_mass_he4 * msun)/(4 * amu)
-        c12_atoms = (s% star_mass_c12 * msun)/(12 * amu)
-        n14_atoms = (s% star_mass_n14 * msun)/(14 * amu)
-        o16_atoms = (s% star_mass_o16 * msun)/(16 * amu)
-        ne20_atoms = (s% star_mass_ne20 * msun)/(20 * amu)
-
-        !Calculating the mg atoms
-        mg_mass = 0
-        mg_mass = s% xa(8,1) * s% star_mass * msun
-        mg24_atoms = (mg_mass)/(24 * amu)
-
-        !Calculating Abundances
-        total_atoms = h1_atoms + he3_atoms + he4_atoms + c12_atoms &
-        + n14_atoms + n14_atoms + o16_atoms + ne20_atoms + mg24_atoms
-
-        !Calculating Mole Fraction
-        atomic_mass_h1 = 1 * amu
-        atomic_mass_he4 = 4 * amu
-        h1_number_frac  = h1_atoms / total_atoms
-        he4_number_frac = he4_atoms / total_atoms
-
-        he3_num_frac = he3_atoms / total_atoms
-        c12_num_frac = c12_atoms / total_atoms
-        n14_num_frac = n14_atoms / total_atoms
-        o16_num_frac = o16_atoms / total_atoms
-        ne20_num_frac = ne20_atoms / total_atoms
-        mg24_num_frac = mg24_atoms / total_atoms
-
-        !Calculating the molar mass from abundances
-        !molar_mass = (h1_number_frac + (he3_num_frac * 3) + (he4_number_frac * 4) + (c12_num_frac * 12) + &
-        !(n14_num_frac * 14) + (o16_num_frac * 16) + (ne20_num_frac * 20) + (mg24_num_frac * 24))! grams/mol
-
-        molar_mass = s% mu(1)
-
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        !!!!!!!!!!!!!!BEGINING OF MORE COMPLES EQUATIONS!!!!!!!!!!!!!!!!!
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        frac_absorbing_radius = 1
-        scale_height = (r_constant * teq) / (molar_mass * (10 ** (s% log_surface_gravity)))
-
-        homopause_pressure = (.001 * (teq ** 1.75) * (1.118)) / ((10 ** 9) * 7.174)
-        radius_above_surface  = -1 * scale_height * LOG(homopause_pressure / (10 ** s% log_surface_pressure))
-
-        !Homopause Radius
-        homopause_radius = planet_radius_cgs + radius_above_surface
-
-        !Calculating the luminosity
-        !The 22.12 instead of 22.12 is to convert to ergs
-        LOG_LEUV = 29.12 - 1.24 * (LOG10((planet_age_cgs / (3.154 * (10 ** 16)))))
-        luminosity_euv = (10 ** LOG_LEUV)
-
-        !K_tides doesn't matter too much. It's usually .99, whereas other factors vary by orders of magnitude
-        epsilon = (((planet_mass_cgs / (host_star_mass)) / 3) ** (1. / 3)) * ((orbital_distance) / planet_radius_cgs)
-        K_tides = (1 - (3. / (2 * epsilon)) + (1. / (2 * (epsilon ** 3))))
-
-        envelope_mass = ((s% star_mass_h1 * msun) / s% xa(1,1))
-
-        !The beginning of the interesting flux rates
-        !This is in terms of the number of atoms
-        escape_dl = (standard_cgrav * planet_mass_cgs * (atomic_mass_he4 - atomic_mass_h1) &
-        * mass_fractionation_effect) / ((homopause_radius ** 2) * kerg * homopause_temp)
-
-        !The 10**7 gets q_c into ergs from watts
-        q_c = (3.23d5) * ((planet_mass_cgs / 1000) ** (1.5)) * (homopause_radius / 100) ** (-.5) * (molar_mass / 6.022d26)
-
-        q_net = frac_absorbed_euv * (luminosity_euv / (10 ** 7)) * ((homopause_radius / 100) ** 2)&
-        / (4 * ((orbital_distance / 100) ** 2))
-
-        IF (q_net < q_c) THEN
-            f_r = 1
-        ELSE
-            f_r = q_c / q_net
-        END IF
-
-        !Energy limited escape rate in the subsonic regime
-        !This is in terms of the grams per second
-        escape_el = f_r * (luminosity_euv * frac_absorbed_euv * (frac_absorbing_radius ** 2) * &
-        (homopause_radius ** 3)) / (4 * K_tides * (orbital_distance ** 2) * standard_cgrav * planet_mass_cgs)
-
-        right_side = escape_dl * h1_number_frac * atomic_mass_h1 * 4 * pi * (homopause_radius ** 2)
-
+        write (*,*) 'comp_bool'
+        write (*,*) comp_bool
         IF (comp_bool > 0) THEN
             IF (escape_el < right_side) THEN
                 write(*,*) 'REG 2'
-                escape_rate_h1 = escape_el
-                escape_rate_he4 = 0
+                total_loss_rate = escape_rate_h1 + escape_rate_he4
 
-                total_loss_rate = (escape_rate_h1 + escape_rate_he4)
-                !s% mstar_dot = -total_loss_rate
-
-                initial_hydrogen_fraction = s% xa(1,1)
                 do i = 1, s% nz
-                    s% xa(1,i) = ((envelope_mass * initial_hydrogen_fraction) - (escape_rate_h1 * s% dt)) &
+                    s% xa(1,i) = ((envelope_mass * s% xa(1,1)) - (escape_rate_h1 * s% dt)) &
                     / (envelope_mass - (escape_rate_h1 * s% dt))
 
                     s% xa(2,i) = (s% xa(2,i) * envelope_mass) / (envelope_mass - (total_loss_rate * s% dt))
@@ -747,25 +580,13 @@
 
             IF (escape_el > right_side) THEN
                 write(*,*) 'REG 1'
-                escape_rate_h1 = ((escape_el * atomic_mass_h1 * h1_number_frac) + (escape_dl * atomic_mass_h1 * atomic_mass_he4 &
-                * h1_number_frac * he4_number_frac * 4 * pi * (homopause_radius ** 2))) &
-                / ((atomic_mass_h1 * h1_number_frac) + (atomic_mass_he4 * he4_number_frac))
-
-                escape_rate_he4 = ((escape_el * atomic_mass_he4 * he4_number_frac) - (escape_dl * atomic_mass_h1 * atomic_mass_he4 &
-                * h1_number_frac * he4_number_frac * 4 * pi * (homopause_radius ** 2))) &
-                / ((atomic_mass_h1 * h1_number_frac) + (atomic_mass_he4 * he4_number_frac))
-
-                total_loss_rate = (escape_rate_h1 + escape_rate_he4)
-                !s% mstar_dot = -total_loss_rate
-
-                initial_hydrogen_fraction = s% xa(1,1)
-                initial_helium_fraction = s% xa(3,1)
+                total_loss_rate = escape_rate_h1 + escape_rate_he4
 
                 do i = 1, s% nz
-                    s% xa(1,i) = ((envelope_mass * initial_hydrogen_fraction) - (escape_rate_h1 * s% dt)) &
+                    s% xa(1,i) = ((envelope_mass * s% xa(1,1)) - (escape_rate_h1 * s% dt)) &
                     / (envelope_mass - (total_loss_rate * s% dt))
 
-                    s% xa(3,i) = ((envelope_mass * initial_helium_fraction) - (escape_rate_he4 * s% dt)) &
+                    s% xa(3,i) = ((envelope_mass * s% xa(3,1)) - (escape_rate_he4 * s% dt)) &
                     / (envelope_mass - (total_loss_rate * s% dt))
 
                     s% xa(2,i) = (s% xa(2,i) * envelope_mass) / (envelope_mass - (total_loss_rate * s% dt))
