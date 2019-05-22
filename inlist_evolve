@@ -15,8 +15,8 @@
   set_initial_model_number = .true.
   initial_model_number = 0       
 
-  !set_initial_age = .true.
-  !initial_age = <<formation_time>>
+  set_initial_age = .true.
+  initial_age = <<formation_time>>
 
   eos_file_prefix = 'mesa'
   kappa_file_prefix = 'gs98'
@@ -46,7 +46,7 @@
   max_model_number = 10000 ! don't let it go on and on if run stuck
   Teff_lower_limit = -1d99
   T_mix_limit = 0
-  logQ_limit=50000000000
+  logQ_limit=1000
       
   ! output to files and terminal
   photo_interval  = 10

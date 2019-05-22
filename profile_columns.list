@@ -33,11 +33,12 @@
    temperature ! temperature at center of zone\
    radius_cm ! radius at outer boundary of zone (in Rsun units)
    conv_vel ! convection velocity (cm/sec)
-   tau
    pressure ! total pressure at center of zone (pgas + prad) 
    luminosity
    m_grav
    log_column_depth
-   
+   opacity
+   log_column_depth
+   tau
  
  

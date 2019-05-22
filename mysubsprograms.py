@@ -44,9 +44,9 @@ def calculate_rho(mp, enFrac):
 
 def calculate_column_depth(Teq, profile):
     e = 2.7182818284
-    T, P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,11,12]) #6000K
+    #T, P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,11,12]) #6000K
     #T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt' ,unpack=True, skiprows =38, usecols=[0,1,7,8]) #4000K
-    #T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt', unpack=True, skiprows =38, usecols=[0,1,5,6]) #3000K
+    T,P, k_r, k_p = loadtxt('OpacityTableSolarMetal.txt', unpack=True, skiprows =38, usecols=[0,1,5,6]) #3000K
 
     Opacity_function = interpolate.interp2d(T, P, k_p)
     zone, mass, temperature, radius, pressure = loadtxt(profile, unpack=True, skiprows =6, usecols=[0,1,2,3,6])   
@@ -58,16 +58,16 @@ def calculate_column_depth(Teq, profile):
         opacity_column_depth = (2 / (Opacity_function(Teq, pressure[i])))[0]
         switch_zone.append((opacity_column_depth - mass_column_depth, zone[i], mass_column_depth))
 
+
     column_depth = abs(switch_zone[0][0])
+    
     if switch_zone[0][0] > 0:
         for i in range(len(switch_zone)):
-            print (switch_zone[i - 1])
             if switch_zone[i][0] < 0:
                 column_depth = switch_zone[i - 1][2]
                 break
     else:
         for i in range(len(switch_zone)):
-            print (switch_zone[i - 1])
             if switch_zone[i][0] > 0:
                 column_depth = switch_zone[i - 1][2]
                 break
@@ -356,3 +356,8 @@ def run_evolve(evolve_profile, inlist_evolve, irrad_mod, evolve_mod, n_frac, a, 
 	os.system('./star_make_planets')
 	run_time = time.time() - start_time
 	return run_time
+
+
+#Teq = 300
+#profile = '/Users/isaacmalsky/Documents/Astro/Data/Mass_Rad/Loss/25/profile_evolve25_0.05_0.18_0.02_0.5_9.0_0.1'
+#calculate_column_depth(Teq, profile)

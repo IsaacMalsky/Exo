@@ -2,11 +2,11 @@
 #SBATCH --account=pi-larogers
 #SBATCH --job-name=MalskyTest
 #SBATCH --time=36:00:00
-#SBATCH --partition=sandyb
+##SBATCH --partition=sandyb
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --mail-type=BEGIN,END
-#SBATCH --mail-user=isaacmalsky@uchicago.edu
+#SBATCH --mail-user=isaacmalsky@gmail.com
 
 module load Anaconda3/5.1.0
 

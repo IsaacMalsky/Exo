@@ -22,23 +22,22 @@ initial_mod = "initial_planet.mod"
 #########         PARAMETERS LISTS         #########
 ####################################################
 
-mpList=[5]
-orbitalList=[.10, .20, .30, .40, .50, 1.0]
-enFracList=[0.005, .01, .025, .05, .10, .20]
-yList = [.18, .24, .30, .36]
+mpList=[22.5]
+orbitalList=[0.01, 0.012, 0.015, 0.018, 0.022, 0.026, 0.032, 0.038, 0.046, 0.056, 0.068, 0.083, 0.1, 0.121, 0.147, 0.178, 0.215, 0.261, 0.316, 0.383, 0.464, 0.562, 0.681, 0.825, 1.0]
+enFracList=[0.001, 0.0015, 0.0021, 0.0031, 0.0045, 0.0066, 0.0097, 0.0142, 0.0207, 0.0302, 0.0441, 0.0644, 0.094, 0.1373, 0.2004]
+yList = [.24]
 zList = [.02]
 entropyList = [9.0]
 n_frac_list = [.10]
 
-
 ####################################################
 #########        IRRAD/EVOL CONDITIONS        ######
 ####################################################                            
-rs = 1.0                      #star radius in rsun
-Teff_star = 6000                 #Host Star Temp
+rs = .42                      #star radius in rsun
+Teff_star = 3318                 #Host Star Temp
 BA= 0.20                         #planet Bond albedo
 a = 1.0                          #frac_absorbing_radius
-ms = 1.0                         #host_star_mass
+ms = .41                         #host_star_mass
 ec = 1e9                         #eddy coefficient
 formation_time = 6e6             #Disk formation time
 

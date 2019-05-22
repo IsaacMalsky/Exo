@@ -100,7 +100,7 @@
 
         !Converting all the planetary paremeters to cgs
         planet_radius_cgs= (10 ** (s% log_surface_radius)) * Rsun
-        planet_age_cgs= (s% star_age) * 365 * 24 * 3600 + (1.892 * (10 ** 14))
+        planet_age_cgs= (s% star_age) * 365 * 24 * 3600 !+ (1.892 * (10 ** 14))
         planet_mass_cgs = (s% star_mass) * msun
 
         comp_bool = 0
@@ -168,8 +168,6 @@
         !V_he = 2.88 V_h2 = 1.98
         !The 1.013d6 converts pressure from atm to barye
         homopause_pressure = ((.001 * (teq ** 1.75) * (1.118)) / ((10 ** 9) * 7.174)) * 1.013d6
-        write (*,*) 'homo pressure', homopause_pressure
-        write (*,*) 'surface pressure', 10 ** s% log_surface_pressure
         radius_above_surface  = -1 * scale_height * LOG(homopause_pressure / (10 ** s% log_surface_pressure))
         homopause_radius = planet_radius_cgs + radius_above_surface
 
@@ -194,10 +192,19 @@
        	q_net = frac_absorbed_euv * (luminosity_euv / (10 ** 7)) * ((homopause_radius / 100) ** 2)&
        	/ (4 * ((orbital_distance / 100) ** 2))
 
-		IF (q_net < q_c) THEN
-			f_r = 1
+		!IF (q_net < q_c) THEN
+        !    f_r = 1
+        !ELSE IF (q_c / q_net < .05) THEN
+        !    f_r = 1
+		!ELSE
+        !    !f_r = q_c / q_net
+        !    f_r = 1
+        !END IF
+           
+        IF (q_net < q_c) THEN
+            f_r = 1
 		ELSE
-			f_r = q_c / q_net
+            f_r = q_c / q_net
 		END IF
 
         !Energy limited escape rate in the subsonic regime
@@ -211,7 +218,10 @@
         envelope_mass = s% xtra3
 
         IF (comp_bool > 0) THEN
+            write(*,*) 'escape_el', escape_el
+            write(*,*) 'right_side', right_side
             IF (escape_el < right_side) THEN
+                write(*,*) 'Hydrogen Loss'
                 escape_rate_h1 = escape_el
                 escape_rate_he4 = 0
 
@@ -225,9 +235,11 @@
                 s% xtra8 = escape_rate_h1
                 s% xtra9 = escape_rate_he4
                 s% xtra10 = teq
+                s% xtra11 = 2
             END IF
 
             IF (escape_el > right_side) THEN
+                write(*,*) 'Hydrogen and Helium Loss'
                 escape_rate_h1 = ((escape_el * atomic_mass_h1 * h1_number_frac) + (escape_dl * atomic_mass_h1 * atomic_mass_he4 &
                 * h1_number_frac * he4_number_frac * 4 * pi * (homopause_radius ** 2))) &
                 / ((atomic_mass_h1 * h1_number_frac) + (atomic_mass_he4 * he4_number_frac))
@@ -246,6 +258,7 @@
                 s% xtra8 = escape_rate_h1
                 s% xtra9 = escape_rate_he4
                 s% xtra10 = teq
+                s% xtra11 = 1
             END IF
         END IF
     end subroutine mass_loss
@@ -360,7 +373,7 @@
         ierr = 0
         call star_ptr(id, s, ierr)
         if (ierr /= 0) return
-        how_many_extra_history_columns = 31
+        how_many_extra_history_columns = 32
     end function how_many_extra_history_columns
           
           
@@ -500,6 +513,9 @@
         names(31) = 'R_transit (1d-3 bar, 1d3 barye)' ! approximate 'transit radius' from Miller, Fortney & Jackson 2009 (Eq. 1)
         vals(31) = vals(30) + (-1 * s% xtra1 * LOG(1000. / (vals(30))))
 
+        names(32) = 'Reg 1 or 2' !
+        vals(32) = s% xtra11
+
     end subroutine data_for_extra_history_columns
 
 
@@ -557,11 +573,8 @@
         comp_bool = s% x_ctrl(56) !False on everything but the evolve inlist
 
 
-        write (*,*) 'comp_bool'
-        write (*,*) comp_bool
         IF (comp_bool > 0) THEN
             IF (escape_el < right_side) THEN
-                write(*,*) 'REG 2'
                 total_loss_rate = escape_rate_h1 + escape_rate_he4
 
                 do i = 1, s% nz
@@ -579,7 +592,6 @@
             END IF
 
             IF (escape_el > right_side) THEN
-                write(*,*) 'REG 1'
                 total_loss_rate = escape_rate_h1 + escape_rate_he4
 
                 do i = 1, s% nz
